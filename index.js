@@ -14,7 +14,7 @@ server.get("/", (request, response) => {
     })
 });
 
-// GET request
+// GET requests
 server.get("/api/users", (request, response) => {
     Hubs.find()
     .then(hubs => {
@@ -22,7 +22,7 @@ server.get("/api/users", (request, response) => {
     })
     .catch(error => {
         console.log(error)
-        response.status(500).json({ errorMessage: "sorry, we ran into an error getting the list of users"})
+        response.status(500).json({ errorMessage: "The users information could not be retrieved." })
     })
 });
 
@@ -30,25 +30,33 @@ server.get("/api/users/:id", (request, response) => {
     const id = request.params.id;
     Hubs.findById(id)
     .then(hubs => {
-        response.status(200).json(hubs)
+        if(!hubs){
+            response.status(404).json({ message: "The user with the specified ID does not exist." })
+        } else {
+            response.status(200).json(hubs);
+        }
     })
     .catch(error => {
         console.log(error)
-        response.status(500).json({ errorMessage: "sorry, we ran into an error fetching a specific user"})
+        response.status(500).json({ errorMessage: "The user information could not be retrieved."})
     })
 });
 
 // POST request
 server.post("/api/users", (request, response) => {
-    const hubData = request.body;
-    Hubs.add(hubData)
-    .then(hub => {
-        response.status(201).json(hub)
-    })
-    .catch(error => {
-        console.log(error)
-        response.status(500).json({ errorMessage: "sorry, we ran into an error removing a user"})
-    })
+    const {name, bio} = request.body;
+    if(!name || !bio) {
+        response.status(400).json({ errorMessage: "Please provide name and bio for the user." })
+    } else {
+        Hubs.insert(request.body)
+        .then(hub => {
+            response.status(201).json(hub)
+        })
+        .catch(error => {
+            console.log(error)
+            response.status(500).json({ errorMessage: "The user could not be removed"})
+        })
+    }
 });
 
 // DELETE request
@@ -56,13 +64,19 @@ server.delete("/api/users/:id", (request, response) => {
     const id = request.params.id;
     Hubs.remove(id)
     .then(deleted => {
-        response.status(204).json(deleted)
+        if(deleted){
+            response.status(200).json({ message:"User successfully removed", deleted})
+        } else {
+            response.status(404).json({ errorMessage: "The user with that specified ID does not exist"})
+        }
     })
     .catch(error => {
         console.log(error)
-        response.status(500).json({ errorMessage: "sorry, we ran into an error removing a user"})
+        response.status(500).json({ errorMessage: "The user could not be removed"})
     })
 });
+
+// PUT request
 
 
 const port = 8000;
